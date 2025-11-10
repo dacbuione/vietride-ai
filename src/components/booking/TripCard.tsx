@@ -15,9 +15,8 @@ export function TripCard({ trip }: TripCardProps) {
     <motion.div
       whileHover={{ y: -5, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300 }}
-      className="cursor-pointer h-full"
     >
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl border-transparent hover:border-blue-500/50 flex flex-col h-full">
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl border-transparent hover:border-blue-500/50">
         <CardHeader className="p-4 bg-muted/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -35,7 +34,7 @@ export function TripCard({ trip }: TripCardProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 space-y-4 flex-grow">
+        <CardContent className="p-4 space-y-4">
           <div className="flex items-center justify-between text-center">
             <div>
               <p className="text-xl font-bold">{trip.departureTime}</p>
@@ -65,7 +64,7 @@ export function TripCard({ trip }: TripCardProps) {
             </Badge>
           </div>
         </CardContent>
-        <CardFooter className="p-4 bg-muted/20 mt-auto">
+        <CardFooter className="p-4 bg-muted/20">
           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all duration-200 hover:shadow-lg">
             Book Now
           </Button>

@@ -1,148 +1,145 @@
-// Home page of the app, Currently a demo page for demonstration.
-// Please rewrite this file to implement your own logic. Do not replace or delete it, simply rewrite this HomePage.tsx file.
-import { useEffect } from 'react'
-import { Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { Toaster, toast } from '@/components/ui/sonner'
-import { create } from 'zustand'
-import { useShallow } from 'zustand/react/shallow'
-import { AppLayout } from '@/components/layout/AppLayout'
-
-// Timer store: independent slice with a clear, minimal API, for demonstration
-type TimerState = {
-  isRunning: boolean;
-  elapsedMs: number;
-  start: () => void;
-  pause: () => void;
-  reset: () => void;
-  tick: (deltaMs: number) => void;
-}
-
-const useTimerStore = create<TimerState>((set) => ({
-  isRunning: false,
-  elapsedMs: 0,
-  start: () => set({ isRunning: true }),
-  pause: () => set({ isRunning: false }),
-  reset: () => set({ elapsedMs: 0, isRunning: false }),
-  tick: (deltaMs) => set((s) => ({ elapsedMs: s.elapsedMs + deltaMs })),
-}))
-
-// Counter store: separate slice to showcase multiple stores without coupling
-type CounterState = {
-  count: number;
-  inc: () => void;
-  reset: () => void;
-}
-
-const useCounterStore = create<CounterState>((set) => ({
-  count: 0,
-  inc: () => set((s) => ({ count: s.count + 1 })),
-  reset: () => set({ count: 0 }),
-}))
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageSquare, BusFront, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { SearchForm } from '@/components/booking/SearchForm';
+import { TripCard } from '@/components/booking/TripCard';
+import { AIAssistant } from '@/components/chat/AIAssistant';
+import { Toaster, toast } from 'sonner';
+import type { Trip } from '@/lib/mockData';
+import { chatService } from '@/lib/chat';
 export function HomePage() {
-  // Select only what is needed to avoid unnecessary re-renders
-  const { isRunning, elapsedMs } = useTimerStore(
-    useShallow((s) => ({ isRunning: s.isRunning, elapsedMs: s.elapsedMs })),
-  )
-  const start = useTimerStore((s) => s.start)
-  const pause = useTimerStore((s) => s.pause)
-  const resetTimer = useTimerStore((s) => s.reset)
-  const count = useCounterStore((s) => s.count)
-  const inc = useCounterStore((s) => s.inc)
-  const resetCount = useCounterStore((s) => s.reset)
-
-  // Drive the timer only while running; avoid update-depth issues with a scoped RAF
+  const [isChatOpen, setChatOpen] = useState(false);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
-    if (!isRunning) return
-    let raf = 0
-    let last = performance.now()
-    const loop = () => {
-      const now = performance.now()
-      const delta = now - last
-      last = now
-      // Read store API directly to keep effect deps minimal and stable
-      useTimerStore.getState().tick(delta)
-      raf = requestAnimationFrame(loop)
+    const handleToolResults = (event: any) => {
+      const { detail } = event;
+      if (detail.toolName === 'search_routes' && detail.result) {
+        setIsLoading(false);
+        if (Array.isArray(detail.result) && detail.result.length > 0) {
+          setTrips(detail.result);
+          toast.success(`Found ${detail.result.length} trips for you!`);
+        } else {
+          setTrips([]);
+          toast.info("Sorry, I couldn't find any trips for that route.");
+        }
+      }
+    };
+    window.addEventListener('tool-result', handleToolResults);
+    return () => window.removeEventListener('tool-result', handleToolResults);
+  }, []);
+  const handleNewMessage = (message: string) => {
+    if (message.toLowerCase().includes('find') || message.toLowerCase().includes('search') || message.toLowerCase().includes('bus')) {
+      setIsLoading(true);
+      setTrips([]);
     }
-    raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
-  }, [isRunning])
-
-  const onPleaseWait = () => {
-    inc()
-    if (!isRunning) {
-      start()
-      toast.success('Building your app…', {
-        description: 'Hang tight, we\'re setting everything up.',
-      })
-    } else {
-      pause()
-      toast.info('Taking a short pause', {
-        description: 'We\'ll continue shortly.',
-      })
-    }
-  }
-
-  const formatted = formatDuration(elapsedMs)
-
+  };
   return (
-    <AppLayout>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-        <ThemeToggle />
-        <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-        <div className="text-center space-y-8 relative z-10 animate-fade-in">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-              <Sparkles className="w-8 h-8 text-white rotating" />
-            </div>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button 
-              size="lg"
-              onClick={onPleaseWait}
-              className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-              aria-live="polite"
-            >
-              Please Wait
-            </Button>
-          </div>
-          <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <div>
-              Time elapsed: <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-            </div>
-            <div>
-              Coins: <span className="font-medium tabular-nums text-foreground">{count}</span>
-            </div>
-          </div>
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { resetTimer(); resetCount(); toast('Reset complete') }}>
-              Reset
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => { inc(); toast('Coin added') }}>
-              Add Coin
-            </Button>
-          </div>
+    <>
+      <div className="min-h-screen w-full bg-background font-sans antialiased relative">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-neutral-950 dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)]">
+          <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,#3b82f622,transparent)]"></div>
         </div>
-        <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-          <p>Powered by Cloudflare</p>
+        <header className="absolute top-0 left-0 right-0 z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center gap-2">
+                <BusFront className="w-8 h-8 text-blue-600" />
+                <h1 className="text-2xl font-bold tracking-tight text-foreground font-['Sora']">VietRide AI</h1>
+              </div>
+              <Button variant="outline" onClick={() => setChatOpen(true)}>
+                AI Assistant
+              </Button>
+            </div>
+          </div>
+        </header>
+        <main>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="py-24 md:py-32 lg:py-40 text-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter text-foreground mb-6 font-['Sora']"
+              >
+                Travel Vietnam, <span className="text-blue-600">Smarter</span>.
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground mb-10"
+              >
+                Instantly book car and bus tickets across Vietnam with our classic search or powerful AI assistant.
+              </motion.p>
+              <SearchForm />
+            </div>
+            <div className="py-12 md:py-16">
+              <AnimatePresence>
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex justify-center items-center flex-col text-center"
+                  >
+                    <div className="loader"></div>
+                    <p className="text-muted-foreground mt-4">AI is searching for the best routes...</p>
+                    <style>{`.loader{width:50px;aspect-ratio:1;border-radius:50%;border:8px solid #514b82;animation:l20-1 0.8s infinite linear alternate,l20-2 1.6s infinite linear}.@keyframes l20-1{0%{clip-path:polygon(50% 50%,0 0,50% 0,50% 0,50% 0,50% 0)}12.5%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 0,100% 0)}25%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 100%,100% 100%)}37.5%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 100%,0 100%)}50%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 100%,0 100%)}62.5%{clip-path:polygon(50% 50%,50% 50%,50% 0,100% 0,100% 100%,0 100%)}75%{clip-path:polygon(50% 50%,50% 50%,50% 50%,100% 0,100% 100%,0 100%)}87.5%{clip-path:polygon(50% 50%,50% 50%,50% 50%,50% 50%,100% 100%,0 100%)}100%{clip-path:polygon(50% 50%,50% 50%,50% 50%,50% 50%,50% 50%,0 100%)}}@keyframes l20-2{0%{transform:scaleY(1) rotate(0deg)}49.99%{transform:scaleY(1) rotate(135deg)}50%{transform:scaleY(-1) rotate(-135deg)}100%{transform:scaleY(-1) rotate(-360deg)}}`}</style>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {trips.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <h2 className="text-3xl font-bold tracking-tight text-center mb-8">Available Trips</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {trips.map((trip, i) => (
+                        <motion.div
+                          key={trip.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: i * 0.1 }}
+                        >
+                          <TripCard trip={trip} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </main>
+        <footer className="py-8 border-t">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground text-sm">
+            <p>&copy; {new Date().getFullYear()} VietRide AI. All rights reserved.</p>
+            <p className="mt-1">Built with ❤️ at Cloudflare.</p>
+            <p className="mt-2 text-xs">Note: AI interactions are subject to usage limits.</p>
+          </div>
         </footer>
-        <Toaster richColors closeButton />
       </div>
-    </AppLayout>
-  )
+      <AIAssistant isOpen={isChatOpen} onClose={() => setChatOpen(false)} onNewMessage={handleNewMessage} />
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 1, type: "spring", stiffness: 200 }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <Button
+          size="lg"
+          className="rounded-full h-16 w-16 shadow-2xl bg-blue-600 hover:bg-blue-700"
+          onClick={() => setChatOpen(true)}
+        >
+          <MessageSquare className="w-8 h-8" />
+        </Button>
+      </motion.div>
+      <Toaster richColors />
+    </>
+  );
 }
