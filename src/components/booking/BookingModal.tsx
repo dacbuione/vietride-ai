@@ -25,7 +25,7 @@ export function BookingModal({ trip, isOpen, onClose }: BookingModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
-  const { token } = useAuthStore((state) => ({ token: state.token }));
+  const token = useAuthStore((state) => state.token);
   const handleNext = () => {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);

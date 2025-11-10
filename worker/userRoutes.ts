@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getAgentByName } from 'agents';
 import { ChatAgent } from './agent';
-import { API_RESPOSES } from './config';
+import { API_RESPONSES } from './config';
 import { Env, getAppController, registerSession, unregisterSession } from "./core-utils";
 import { mockTrips } from '../src/lib/mockData';
 import type { User, Booking, Trip } from './types';
@@ -25,7 +25,7 @@ export function coreRoutes(app: Hono<{ Bindings: Env }>) {
         console.error('Agent routing error:', error);
         return c.json({
             success: false,
-            error: API_RESPOSES.AGENT_ROUTING_FAILED
+            error: API_RESPONSES.AGENT_ROUTING_FAILED
         }, { status: 500 });
         }
     });

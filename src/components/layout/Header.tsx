@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 export function Header() {
-  const { user, logout } = useAuthStore((state) => ({ user: state.user, logout: state.logout }));
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
   const handleLogout = () => {
     logout();

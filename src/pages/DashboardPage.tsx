@@ -7,13 +7,13 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bus, Calendar, Clock, MapPin, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import type { Booking } from '../../worker/types';
 import { format } from 'date-fns';
 export function DashboardPage() {
-  const { user, token } = useAuthStore((state) => ({ user: state.user, token: state.token }));
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
