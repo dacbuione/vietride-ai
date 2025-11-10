@@ -1,6 +1,6 @@
 # VietRide AI
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/dacbuione/vietride-ai)
 
 An AI-powered platform to seamlessly book car and bus tickets across Vietnam.
 
@@ -119,7 +119,7 @@ After a successful deployment, Wrangler will output the URL of your live applica
 
 Alternatively, you can deploy directly from your GitHub repository with a single click:
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/dacbuione/vietride-ai)
 
 ## Project Structure
 
