@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, BusFront, X } from 'lucide-react';
+import { MessageSquare, BusFront } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchForm } from '@/components/booking/SearchForm';
 import { TripCard } from '@/components/booking/TripCard';
 import { AIAssistant } from '@/components/chat/AIAssistant';
+import { BookingModal } from '@/components/booking/BookingModal';
 import { Toaster, toast } from 'sonner';
 import type { Trip } from '@/lib/mockData';
-import { chatService } from '@/lib/chat';
+import { format } from 'date-fns';
 export function HomePage() {
   const [isChatOpen, setChatOpen] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   useEffect(() => {
     const handleToolResults = (event: any) => {
       const { detail } = event;
@@ -29,11 +32,43 @@ export function HomePage() {
     window.addEventListener('tool-result', handleToolResults);
     return () => window.removeEventListener('tool-result', handleToolResults);
   }, []);
-  const handleNewMessage = (message: string) => {
+  const handleNewMessageFromAI = (message: string) => {
     if (message.toLowerCase().includes('find') || message.toLowerCase().includes('search') || message.toLowerCase().includes('bus')) {
       setIsLoading(true);
       setTrips([]);
     }
+  };
+  const handleSearch = async (params: { origin: string; destination: string; date?: Date }) => {
+    setIsLoading(true);
+    setTrips([]);
+    try {
+      const query = new URLSearchParams({
+        origin: params.origin,
+        destination: params.destination,
+        date: params.date ? format(params.date, 'yyyy-MM-dd') : '',
+      });
+      const response = await fetch(`/api/trips/search?${query.toString()}`);
+      const result = await response.json();
+      if (result.success && Array.isArray(result.data)) {
+        if (result.data.length > 0) {
+          setTrips(result.data);
+          toast.success(`Found ${result.data.length} trips!`);
+        } else {
+          toast.info("No trips found for the selected route. Try another search!");
+        }
+      } else {
+        toast.error(result.error || "An error occurred while searching.");
+      }
+    } catch (error) {
+      toast.error("Failed to connect to the server. Please try again.");
+      console.error("Search failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleBookNow = (trip: Trip) => {
+    setSelectedTrip(trip);
+    setIsBookingModalOpen(true);
   };
   return (
     <>
@@ -73,7 +108,7 @@ export function HomePage() {
               >
                 Instantly book car and bus tickets across Vietnam with our classic search or powerful AI assistant.
               </motion.p>
-              <SearchForm />
+              <SearchForm onSearch={handleSearch} isLoading={isLoading} />
             </div>
             <div className="py-12 md:py-16">
               <AnimatePresence>
@@ -85,7 +120,7 @@ export function HomePage() {
                     className="flex justify-center items-center flex-col text-center"
                   >
                     <div className="loader"></div>
-                    <p className="text-muted-foreground mt-4">AI is searching for the best routes...</p>
+                    <p className="text-muted-foreground mt-4">Searching for the best routes...</p>
                     <style>{`.loader{width:50px;aspect-ratio:1;border-radius:50%;border:8px solid #514b82;animation:l20-1 0.8s infinite linear alternate,l20-2 1.6s infinite linear}.@keyframes l20-1{0%{clip-path:polygon(50% 50%,0 0,50% 0,50% 0,50% 0,50% 0)}12.5%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 0,100% 0)}25%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 100%,100% 100%)}37.5%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 100%,0 100%)}50%{clip-path:polygon(50% 50%,0 0,50% 0,100% 0,100% 100%,0 100%)}62.5%{clip-path:polygon(50% 50%,50% 50%,50% 0,100% 0,100% 100%,0 100%)}75%{clip-path:polygon(50% 50%,50% 50%,50% 50%,100% 0,100% 100%,0 100%)}87.5%{clip-path:polygon(50% 50%,50% 50%,50% 50%,50% 50%,100% 100%,0 100%)}100%{clip-path:polygon(50% 50%,50% 50%,50% 50%,50% 50%,50% 50%,0 100%)}}@keyframes l20-2{0%{transform:scaleY(1) rotate(0deg)}49.99%{transform:scaleY(1) rotate(135deg)}50%{transform:scaleY(-1) rotate(-135deg)}100%{transform:scaleY(-1) rotate(-360deg)}}`}</style>
                   </motion.div>
                 )}
@@ -105,6 +140,7 @@ export function HomePage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: i * 0.1 }}
+                          onClick={() => handleBookNow(trip)}
                         >
                           <TripCard trip={trip} />
                         </motion.div>
@@ -124,7 +160,8 @@ export function HomePage() {
           </div>
         </footer>
       </div>
-      <AIAssistant isOpen={isChatOpen} onClose={() => setChatOpen(false)} onNewMessage={handleNewMessage} />
+      <AIAssistant isOpen={isChatOpen} onClose={() => setChatOpen(false)} onNewMessage={handleNewMessageFromAI} />
+      <BookingModal trip={selectedTrip} isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} />
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Bus, Check, CreditCard, Loader2, User, Users } from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "sonner";
 import type { Trip } from "@/lib/mockData";
 interface BookingModalProps {
   trip: Trip | null;
@@ -25,54 +23,25 @@ export function BookingModal({ trip, isOpen, onClose }: BookingModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
-  const token = useAuthStore((state) => state.token);
   const handleNext = () => {
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
   };
-  const handleConfirmBooking = async () => {
+  const handleConfirmBooking = () => {
     setIsProcessing(true);
-    const bookingId = `VR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    if (token && trip) {
-      try {
-        const response = await fetch('/api/bookings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ trip }),
-        });
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to save booking.');
-        }
-        toast.success("Your booking has been saved to your account!");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An unknown error occurred.');
-        setIsProcessing(false);
-        return;
-      }
-    }
-    // Simulate processing time for visual feedback
     setTimeout(() => {
       setIsProcessing(false);
+      const bookingId = `VR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       navigate(`/booking/${bookingId}/confirmation`, { state: { trip } });
       onClose();
       setCurrentStep(1);
-    }, 500);
+    }, 1500);
   };
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
   if (!trip) return null;
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        onClose();
-        // Reset step on close
-        setTimeout(() => setCurrentStep(1), 300);
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
@@ -86,22 +55,22 @@ export function BookingModal({ trip, isOpen, onClose }: BookingModalProps) {
           <Progress value={progress} className="w-full" />
           <div className="flex justify-between mt-2">
             {steps.map((step) => (
-              <div key={step.id} className="flex flex-col items-center text-center w-1/4">
+              <div key={step.id} className="flex flex-col items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors duration-300 ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
                     currentStep >= step.id ? "bg-blue-600 border-blue-600 text-white" : "bg-muted border-border"
                   }`}
                 >
                   {currentStep > step.id ? <Check className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
                 </div>
-                <p className={`text-xs mt-1 transition-colors duration-300 ${currentStep >= step.id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                <p className={`text-xs mt-1 ${currentStep >= step.id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                   {step.name}
                 </p>
               </div>
             ))}
           </div>
         </div>
-        <div className="min-h-[200px] flex items-center justify-center">
+        <div className="min-h-[200px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -109,7 +78,6 @@ export function BookingModal({ trip, isOpen, onClose }: BookingModalProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.3 }}
-              className="w-full"
             >
               {currentStep === 1 && (
                 <div className="text-center space-y-4 p-8 bg-muted/50 rounded-lg">
@@ -119,7 +87,7 @@ export function BookingModal({ trip, isOpen, onClose }: BookingModalProps) {
               )}
               {currentStep === 2 && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-center mb-4">Passenger Details</h3>
+                  <h3 className="font-semibold">Passenger Details</h3>
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
                     <Input id="name" placeholder="e.g. Alex Doe" />

@@ -11,10 +11,16 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
+import { BookingConfirmationPage } from '@/pages/BookingConfirmationPage';
 const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/booking/:bookingId/confirmation",
+    element: <BookingConfirmationPage />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);
