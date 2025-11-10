@@ -12,6 +12,8 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import { BookingConfirmationPage } from '@/pages/BookingConfirmationPage';
+import { AuthPage } from '@/pages/AuthPage';
+import { DashboardPage } from '@/pages/DashboardPage';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -21,6 +23,16 @@ const router = createBrowserRouter([
   {
     path: "/booking/:bookingId/confirmation",
     element: <BookingConfirmationPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/auth",
+    element: <AuthPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardPage />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);

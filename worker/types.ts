@@ -1,20 +1,18 @@
+import type { Trip as TripDetails } from '../src/lib/mockData';
+export type Trip = TripDetails;
 export interface ApiResponse<T = unknown> { success: boolean; data?: T; error?: string; }
-
 export interface WeatherResult {
   location: string;
   temperature: number;
   condition: string;
   humidity: number;
 }
-
 export interface MCPResult {
   content: string;
 }
-
 export interface ErrorResult {
   error: string;
 }
-
 export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -22,14 +20,12 @@ export interface Message {
   id: string;
   toolCalls?: ToolCall[];
 }
-
 export interface ToolCall {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
   result?: unknown;
 }
-
 export interface ChatState {
   messages: Message[];
   sessionId: string;
@@ -37,14 +33,12 @@ export interface ChatState {
   model: string;
   streamingMessage?: string;
 }
-
 export interface SessionInfo {
   id: string;
   title: string;
   createdAt: number;
   lastActive: number;
 }
-
 export interface Tool {
   name: string;
   description: string;
@@ -53,4 +47,15 @@ export interface Tool {
     properties: Record<string, unknown>;
     required: string[];
   };
+}
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+}
+export interface Booking {
+  id: string;
+  userId: string;
+  trip: Trip;
+  bookingDate: string;
 }

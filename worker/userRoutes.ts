@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import { getAgentByName } from 'agents';
 import { ChatAgent } from './agent';
-import { API_RESPONSES } from './config';
+import { API_RESPOSES } from './config';
 import { Env, getAppController, registerSession, unregisterSession } from "./core-utils";
 import { mockTrips } from '../src/lib/mockData';
+import type { User, Booking, Trip } from './types';
 /**
  * DO NOT MODIFY THIS FUNCTION. Only for your reference.
  */
@@ -24,7 +25,7 @@ export function coreRoutes(app: Hono<{ Bindings: Env }>) {
         console.error('Agent routing error:', error);
         return c.json({
             success: false,
-            error: API_RESPONSES.AGENT_ROUTING_FAILED
+            error: API_RESPOSES.AGENT_ROUTING_FAILED
         }, { status: 500 });
         }
     });
@@ -49,6 +50,61 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
         // In a real scenario, you would also filter by the 'date' parameter.
         // For this mock implementation, we ignore the date.
         return c.json({ success: true, data: results });
+    });
+    /**
+     * User Registration
+     * POST /api/auth/register
+     */
+    app.post('/api/auth/register', async (c) => {
+        const controller = getAppController(c.env);
+        const { email, password } = await c.req.json();
+        if (!email || !password) {
+            return c.json({ success: false, error: 'Email and password are required' }, { status: 400 });
+        }
+        const result = await controller.registerUser(email, password);
+        return c.json(result);
+    });
+    /**
+     * User Login
+     * POST /api/auth/login
+     */
+    app.post('/api/auth/login', async (c) => {
+        const controller = getAppController(c.env);
+        const { email, password } = await c.req.json();
+        if (!email || !password) {
+            return c.json({ success: false, error: 'Email and password are required' }, { status: 400 });
+        }
+        const result = await controller.loginUser(email, password);
+        return c.json(result);
+    });
+    /**
+     * Create a new booking
+     * POST /api/bookings
+     */
+    app.post('/api/bookings', async (c) => {
+        const authHeader = c.req.header('Authorization');
+        const token = authHeader?.split(' ')[1];
+        if (!token) {
+            return c.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+        const controller = getAppController(c.env);
+        const { trip } = await c.req.json<{ trip: Trip }>();
+        const result = await controller.addBooking(token, trip);
+        return c.json(result);
+    });
+    /**
+     * Get user's bookings
+     * GET /api/bookings
+     */
+    app.get('/api/bookings', async (c) => {
+        const authHeader = c.req.header('Authorization');
+        const token = authHeader?.split(' ')[1];
+        if (!token) {
+            return c.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+        const controller = getAppController(c.env);
+        const result = await controller.getBookings(token);
+        return c.json(result);
     });
     /**
      * List all chat sessions

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, BusFront } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchForm } from '@/components/booking/SearchForm';
 import { TripCard } from '@/components/booking/TripCard';
 import { AIAssistant } from '@/components/chat/AIAssistant';
 import { BookingModal } from '@/components/booking/BookingModal';
+import { Header } from '@/components/layout/Header';
 import { Toaster, toast } from 'sonner';
 import type { Trip } from '@/lib/mockData';
 import { format } from 'date-fns';
@@ -76,19 +77,7 @@ export function HomePage() {
         <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-neutral-950 dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)]">
           <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,#3b82f622,transparent)]"></div>
         </div>
-        <header className="absolute top-0 left-0 right-0 z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center gap-2">
-                <BusFront className="w-8 h-8 text-blue-600" />
-                <h1 className="text-2xl font-bold tracking-tight text-foreground font-['Sora']">VietRide AI</h1>
-              </div>
-              <Button variant="outline" onClick={() => setChatOpen(true)}>
-                AI Assistant
-              </Button>
-            </div>
-          </div>
-        </header>
+        <Header />
         <main>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-24 md:py-32 lg:py-40 text-center">
